@@ -24,6 +24,8 @@ public struct ContentView: View {
 
     @State private var learningType: LearningType = .study
 
+    @State private var isAnswered: Bool = false
+
     init(context: NSManagedObjectContext) {
         let studyManager = StudyManager.shared
 
@@ -90,13 +92,16 @@ public struct ContentView: View {
                                 StudyTestView(
                                     terms: terms,
                                     isStudyInProgress: $isStudyInProgress,
-                                    learningType: $learningType
+
+                                    learningType: $learningType,
+                                    isAnswered: $isAnswered
                                 ).environmentObject(navigationManager)
 
                             case .ReviewTest:
                                 ReviewTestView(
                                     isStudyInProgress: $isStudyInProgress,
-                                    learningType: $learningType
+                                    learningType: $learningType,
+                                    isAnswered: $isAnswered
                                 ).environmentObject(navigationManager)
 
                             case let .TestCompletion(index):

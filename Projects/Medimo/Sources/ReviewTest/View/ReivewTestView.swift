@@ -14,7 +14,7 @@ struct ReviewTestView: View {
     @State private var showExitConfirm = false
 
     private var viewModel: ReviewTestViewModel
-    @State private var index: Int = 1
+    @State private var index: Int = 0
     @Binding var isStudyInProgress: Bool
     
     @State var terms: [Term]
@@ -27,11 +27,14 @@ struct ReviewTestView: View {
     @State private var showSoundAlert = false
     
     @Binding var learningType: LearningType
+    
+    @Binding var isAnswered: Bool
 
     init(
         isStudyInProgress: Binding<Bool>,
         learningType: Binding<LearningType>,
-        viewModel: ReviewTestViewModel = ReviewTestViewModel()
+        viewModel: ReviewTestViewModel = ReviewTestViewModel(),
+        isAnswered: Binding<Bool>
     ) {
         self._isStudyInProgress = isStudyInProgress
         self.viewModel = viewModel
@@ -40,26 +43,26 @@ struct ReviewTestView: View {
         self.terms = todayTerms
         self._studyTermSize = State(initialValue: todayTerms.count)
         self._learningType = learningType
+        self._isAnswered = isAnswered
     }
 
     var body: some View {
         VStack {
-            ProgressBar(index: index, total: terms.count)
+            ProgressBar(index: index + 1, total: terms.count)
                 .padding(.bottom, 48)
                 .padding(.horizontal, 8)
-            
-            if terms.indices.contains(index - 1) {
-                ReviewTestDetailView(
-                    term: $terms[index - 1],
-                    testType: currentTestType,
-                    buttonText: buttonText,
-                    termSize: $studyTermSize,
-                    index: $index,
-                    isStudyInProgress: $isStudyInProgress,
-                    showSoundAlert: $showSoundAlert,
-                    learningType: $learningType
-                )
-            }
+
+            ReviewTestDetailView(
+                term: $terms[index],
+                testType: currentTestType,
+                buttonText: buttonText,
+                termSize: $studyTermSize,
+                index: $index,
+                isStudyInProgress: $isStudyInProgress,
+                showSoundAlert: $showSoundAlert,
+                learningType: $learningType,
+                isAnswered: $isAnswered
+            )
         }
         .padding(24)
         .background(AppColor.bgColor)
@@ -84,34 +87,18 @@ struct ReviewTestView: View {
             Text("지금 나가면 진행 중인 학습이 초기화돼요.\n정말 종료할까요?")
         }
         .onAppear {
-            guard !terms.isEmpty, terms.indices.contains(index - 1) else { return }
-            currentTestType = randomValidTestType(for: terms[index - 1])
+            guard !terms.isEmpty, terms.indices.contains(index) else { return }
+            currentTestType = randomValidTestType(for: terms[index])
         }
         .onChange(of: index) { _, newValue in
-            if newValue == studyTermSize {
+            if newValue == studyTermSize - 1 {
                 buttonText = "학습 결과 보러가기"
             } else {
                 buttonText = "다음 문제로"
             }
-            currentTestType = randomValidTestType(for: terms[newValue - 1])
+            currentTestType = randomValidTestType(for: terms[newValue])
         }
     }
-
-//    private func randomValidTestType(for term: Term) -> TestType {
-//        let availableTypes = TestType.allCases.filter { type in
-//            switch type {
-//            case .abbreviation:
-//                guard let abbr = term.abbreviation?.trimmingCharacters(in: .whitespacesAndNewlines),
-//                      !abbr.isEmpty else {
-//                    return false
-//                }
-//                return true
-//            default:
-//                return true
-//            }
-//        }
-//        return availableTypes.randomElement() ?? .meaning
-//    }
     
     private func randomValidTestType(for term: Term) -> TestType {
         let availableTypes = TestType.allCases.filter { type in
